@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.local
+.DS_Store
+.env
+.env.*
+
+# Model weights and wasm runtimes (~33 MB) — restore with `npm run fetch-models`
+public/models/
+public/vendor/
+*.tsbuildinfo

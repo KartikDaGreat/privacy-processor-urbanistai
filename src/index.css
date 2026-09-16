@@ -1,0 +1,99 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Pure blue / grey / black / white — dark privacy-tool palette */
+    --background: 225 25% 5%;
+    --foreground: 0 0% 98%;
+
+    --card: 225 22% 9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 225 24% 7%;
+    --popover-foreground: 0 0% 98%;
+
+    --surface-glass: 225 20% 12%;
+
+    --primary: 240 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 225 16% 16%;
+    --secondary-foreground: 0 0% 92%;
+
+    --muted: 225 14% 18%;
+    --muted-foreground: 225 8% 62%;
+
+    --accent: 240 100% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 52%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 70% 45%;
+
+    --border: 225 16% 18%;
+    --input: 225 16% 18%;
+    --ring: 240 100% 50%;
+
+    --glow-primary: 240 100% 50%;
+
+    --radius: 0.625rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    background-image:
+      radial-gradient(60rem 40rem at 20% -10%, hsl(240 100% 50% / 0.10), transparent 60%),
+      radial-gradient(50rem 30rem at 90% 0%, hsl(240 100% 50% / 0.06), transparent 55%);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .font-mono-display {
+    @apply font-mono tracking-tight;
+  }
+
+  .glass-surface {
+    background: hsl(var(--surface-glass) / 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid hsl(var(--border) / 0.9);
+  }
+
+  .glow-primary {
+    box-shadow:
+      0 0 0 1px hsl(var(--glow-primary) / 0.35),
+      0 0 22px -2px hsl(var(--glow-primary) / 0.55),
+      0 0 60px -12px hsl(var(--glow-primary) / 0.45);
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(
+      100deg,
+      hsl(240 100% 62%) 0%,
+      hsl(215 100% 72%) 55%,
+      hsl(200 100% 82%) 100%
+    );
+  }
+}
+
+/* Checkerboard so transparent/blurred regions stay readable */
+.checker {
+  background-image:
+    linear-gradient(45deg, hsl(0 0% 100% / 0.04) 25%, transparent 25%),
+    linear-gradient(-45deg, hsl(0 0% 100% / 0.04) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, hsl(0 0% 100% / 0.04) 75%),
+    linear-gradient(-45deg, transparent 75%, hsl(0 0% 100% / 0.04) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
