@@ -7,6 +7,7 @@ import { ComparisonGrid } from "@/components/ComparisonGrid";
 import { Header } from "@/components/Header";
 import { ImageUpload } from "@/components/ImageUpload";
 import { ModelSelector } from "@/components/ModelSelector";
+import { SampleImages } from "@/components/SampleImages";
 import { Button } from "@/components/ui/button";
 import { describeProcessingError } from "@/lib/apiError";
 import { decodeImage, imageDataToPngBlob, MAX_DIMENSION } from "@/lib/image";
@@ -168,14 +169,21 @@ export default function Index() {
               Upload an image, choose a detection model and blur method, and
               protect identities in seconds.
             </p>
-            <div className="mt-10 text-left">
+            <div className="mt-10 space-y-8 text-left">
               <ImageUpload
                 onSelect={handleSelect}
                 hasImage={false}
                 disabled={isProcessing}
               />
+              <SampleImages
+                onSelect={handleSelect}
+                onError={(description) =>
+                  toast.error("That sample could not be loaded", { description })
+                }
+                disabled={isProcessing}
+              />
             </div>
-            <p className="mt-6 text-micro text-muted-foreground">{DISCLAIMER}</p>
+            <p className="mt-8 text-micro text-muted-foreground">{DISCLAIMER}</p>
           </section>
         ) : (
           <>

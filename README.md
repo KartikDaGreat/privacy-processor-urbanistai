@@ -88,6 +88,19 @@ Box and Gaussian use moving-sum passes, so their cost does not grow with kernel
 size. Median uses a sliding 256-bin histogram (Huang's method), which is O(kernel)
 per pixel rather than O(kernel²).
 
+### Starter photos
+
+Three freely-licensed samples ship in `public/samples/` so the tool can be tried
+without hunting for an image. They were chosen by running the app's own
+detectors over a pool of Wikimedia Commons candidates and keeping one photo
+where every model agrees (5 faces), one where they disagree sharply (51 faces —
+Haar finds 43, YuNet 51, the DNN 0 because it downsamples to 300x300), and one
+of candid profiles. Attribution is in
+[`public/samples/CREDITS.md`](public/samples/CREDITS.md) and shown in the app.
+
+Swapping one means dropping a file in that directory and updating the matching
+entry in `src/lib/samples.ts`.
+
 ### Loading behavior
 
 Model files are fetched lazily and cached for the session — nothing downloads
