@@ -8,7 +8,9 @@ anonymized image with all metadata stripped.
 Everything runs **in the browser**. There is no backend, no upload, and no API
 call — the image never leaves the machine it was opened on.
 
-**Live:**
+**Live: https://anonymize.kartikgounder.com**
+
+Also reachable at the deploy URLs it is served from:
 - Vercel — https://privacy-processor-urbanistai.vercel.app
 - GitHub Pages — https://kartikdagreat.github.io/privacy-processor-urbanistai/
 
@@ -120,7 +122,7 @@ automatically on push to `main`.
 
 | Target | Trigger | Base path |
 |---|---|---|
-| Vercel | GitHub integration | `/` |
+| Vercel (canonical, `anonymize.kartikgounder.com`) | GitHub integration | `/` |
 | GitHub Pages | `.github/workflows/deploy.yml` | `/privacy-processor-urbanistai/` |
 
 The two differ only in where they are rooted. `vite.config.ts` reads `VITE_BASE`
@@ -131,26 +133,27 @@ the same source builds correctly for both.
 Neither target commits the model weights — both run `npm run fetch-models`
 during the build.
 
-### Custom domain via Cloudflare
+### Custom domain
 
-Point the subdomain at **one** target (Vercel is the better default — faster
-CDN, no base-path rewriting):
+`anonymize.kartikgounder.com` points at the Vercel deployment. DNS is on
+Cloudflare:
 
-**Vercel**
-1. `vercel domains add <sub.domain.com>` — or add it under the project's
-   Settings → Domains.
-2. In Cloudflare, add a `CNAME` for the subdomain to `cname.vercel-dns.com`.
-3. Set that record to **DNS only** (grey cloud) until Vercel reports the
-   certificate as issued. Leaving Cloudflare's proxy on during issuance is the
-   usual cause of a stuck "Invalid Configuration".
+| Type | Name | Target | Proxy |
+|---|---|---|---|
+| CNAME | `anonymize` | `cname.vercel-dns.com` | DNS only (grey cloud) |
 
-**GitHub Pages** (if you prefer Pages as the canonical host)
-1. Add the domain under repo Settings → Pages → Custom domain. This commits a
-   `CNAME` file.
-2. In Cloudflare, add a `CNAME` for the subdomain to `kartikdagreat.github.io`,
-   again **DNS only** until the certificate is issued.
-3. Drop `VITE_BASE` from the workflow — on a custom domain the site is served
-   from the root, so the base path must go back to `/`.
+The record is deliberately **not** proxied, matching how the apex
+`kartikgounder.com` is configured. Turning Cloudflare's orange proxy on is the
+usual cause of a stuck certificate or a redirect loop, since Vercel terminates
+TLS itself.
+
+Vercel's CLI warns that the nameservers are Cloudflare's rather than
+`ns1/ns2.vercel-dns.com`. That warning is safe to ignore — a CNAME on
+third-party DNS is a supported setup and nothing needs to move.
+
+To point a subdomain at GitHub Pages instead, CNAME it to
+`kartikdagreat.github.io` and drop `VITE_BASE` from the workflow — a custom
+domain serves from the root, so the base path has to go back to `/`.
 
 ---
 
