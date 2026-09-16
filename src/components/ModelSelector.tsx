@@ -1,4 +1,3 @@
-import { Layers } from "lucide-react";
 import { MODELS, type DetectionModelId } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -10,46 +9,43 @@ interface ModelSelectorProps {
 
 export function ModelSelector({ value, onChange, disabled }: ModelSelectorProps) {
   return (
-    <fieldset disabled={disabled} className="space-y-2">
-      <legend className="mb-2 flex items-center gap-2 text-[11px] font-mono-display uppercase tracking-widest text-muted-foreground">
-        <Layers className="h-3.5 w-3.5" />
+    <fieldset disabled={disabled}>
+      <legend className="mb-2.5 text-meta font-medium text-foreground">
         Detection model
       </legend>
 
-      {MODELS.map((model) => {
-        const selected = model.id === value;
-        return (
-          <button
-            key={model.id}
-            type="button"
-            onClick={() => onChange(model.id)}
-            aria-pressed={selected}
-            className={cn(
-              "w-full rounded-lg border px-3 py-2.5 text-left transition-all",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              "disabled:cursor-not-allowed disabled:opacity-50",
-              selected
-                ? "border-primary bg-primary/10 glow-primary"
-                : "border-border bg-background/40 hover:border-primary/50 hover:bg-primary/5",
-            )}
-          >
-            <div className="flex items-center gap-2">
+      <div className="space-y-1">
+        {MODELS.map((model) => {
+          const selected = model.id === value;
+          return (
+            <button
+              key={model.id}
+              type="button"
+              onClick={() => onChange(model.id)}
+              aria-pressed={selected}
+              className={cn(
+                "w-full rounded-md px-2.5 py-1.5 text-left transition-colors",
+                "disabled:cursor-not-allowed disabled:opacity-50",
+                selected
+                  ? "bg-primary/15 ring-1 ring-inset ring-primary/70"
+                  : "hover:bg-raised",
+              )}
+            >
               <span
                 className={cn(
-                  "h-1.5 w-1.5 shrink-0 rounded-full",
-                  selected ? "bg-primary" : "bg-muted-foreground/40",
+                  "block text-meta font-medium",
+                  selected ? "text-primary-text" : "text-foreground",
                 )}
-              />
-              <span className="font-mono-display text-xs text-foreground">
+              >
                 {model.label}
               </span>
-            </div>
-            <p className="mt-0.5 pl-3.5 text-[11px] leading-snug text-muted-foreground">
-              {model.description}
-            </p>
-          </button>
-        );
-      })}
+              <span className="mt-0.5 block text-micro leading-snug text-muted-foreground">
+                {model.description}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </fieldset>
   );
 }

@@ -51,6 +51,11 @@ with OpenCV and MediaPipe. This build does the same work client-side:
 | Blurring | Hand-written kernels over `ImageData` |
 | Metadata stripping | Canvas re-encode to PNG |
 
+The interface is built around verification rather than a single "done": the
+result is one large frame you wipe between original and anonymized, with the
+blurred regions marked, and a contact sheet that runs the same photo through
+every detector so you can see which one caught the most.
+
 **Metadata stripping** is a property of the pipeline, not a separate step. A
 `<canvas>` holds pixels and nothing else, so anything re-encoded from one carries
 no EXIF, GPS, maker notes, or colour profile. Both the *Original* preview and the
@@ -107,7 +112,7 @@ src/
       index.ts      Orchestration, including the run_all chain
       mediapipe.ts  MediaPipe Tasks detectors
       opencv.ts     Haar, DNN SSD, YuNet via OpenCV.js
-  components/       Header, ImageUpload, ResultView, selectors, ComparisonGrid
+  components/       Header, ImageUpload, CompareView, selectors, ComparisonGrid
   pages/Index.tsx   The single page
 scripts/
   fetch-models.mjs  Downloads models and runtimes into public/
@@ -169,3 +174,7 @@ domain serves from the root, so the base path has to go back to `/`.
   losslessly.
 - Detection runs on the main thread. A large image with Run All takes a few
   seconds; the UI shows which model is currently running.
+
+
+
+Link to the final presentation recording: https://columbia.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=ea280966-1dc6-4e27-9e76-b44400fdf038

@@ -2,15 +2,15 @@ import { Shield } from "lucide-react";
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
+    <header className="border-b border-border">
+      <div className="mx-auto flex max-w-[1180px] items-center justify-between gap-6 px-6 py-4">
         <div className="flex items-center gap-2.5">
-          <Shield className="h-6 w-6 shrink-0 text-primary" strokeWidth={2.2} />
-          <h1 className="gradient-text font-mono-display text-base font-bold sm:text-lg">
+          <Shield className="h-5 w-5 shrink-0 text-primary-text" strokeWidth={2.1} />
+          <span className="gradient-text text-[0.9375rem] font-semibold tracking-tight">
             Urbanist AI Privacy Processor
-          </h1>
+          </span>
         </div>
-        <p className="hidden text-xs font-mono-display text-muted-foreground sm:block">
+        <p className="hidden text-micro text-muted-foreground sm:block">
           Remove metadata + face anonymization
         </p>
       </div>

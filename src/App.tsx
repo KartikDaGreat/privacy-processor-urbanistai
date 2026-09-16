@@ -7,7 +7,8 @@ export default function App() {
       <Index />
       <Toaster
         theme="dark"
-        position="bottom-right"
+        /* Bottom-right overlapped the comparison controls, which sit low on the page. */
+        position="top-center"
         richColors
         closeButton
         toastOptions={{ className: "font-sans" }}

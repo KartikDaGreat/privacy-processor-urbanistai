@@ -11,14 +11,14 @@ const buttonVariants = cva(
         default:
           "bg-primary text-primary-foreground hover:brightness-125 active:brightness-95",
         outline:
-          "border border-border bg-transparent hover:bg-secondary hover:text-secondary-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-muted",
-        ghost: "hover:bg-secondary hover:text-secondary-foreground",
+          "border border-border bg-transparent hover:bg-raised hover:text-foreground",
+        secondary: "bg-raised text-secondary-foreground hover:bg-secondary",
+        ghost: "text-muted-foreground hover:bg-raised hover:text-foreground",
         destructive:
           "bg-destructive text-destructive-foreground hover:brightness-110",
       },
       size: {
-        default: "h-10 px-4 py-2",
+        default: "h-9 px-3.5 py-2",
         sm: "h-8 rounded-md px-3 text-xs",
         lg: "h-12 rounded-md px-6 text-base",
         icon: "h-9 w-9",

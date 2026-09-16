@@ -30,7 +30,7 @@ export const MODELS: ModelOption[] = [
   {
     id: "run_all",
     label: "Run All (cumulative)",
-    description: "Chains every model in sequence for maximum coverage",
+    description: "Chains all five detectors so their coverage adds up",
   },
   {
     id: "mediapipe",

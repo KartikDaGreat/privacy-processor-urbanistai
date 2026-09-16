@@ -49,6 +49,8 @@ export async function detectFaces(
 export interface StageResult {
   modelId: RealModelId;
   faces: number;
+  /** Exactly the regions this stage blurred, in source-image pixels. */
+  boxes: FaceBox[];
 }
 
 export interface ProcessResult {
@@ -56,6 +58,8 @@ export interface ProcessResult {
   /** Total faces blurred across every stage. */
   faceCount: number;
   stages: StageResult[];
+  /** Every blurred region, flattened, for drawing detection overlays. */
+  boxes: FaceBox[];
 }
 
 export interface ProcessOptions {
@@ -94,14 +98,19 @@ export async function processImage({
 
     const faces = await detectFaces(working, modelId);
     const blurred = blurFaces(working, faces, blurMethod);
-    faceCount += blurred;
-    stages.push({ modelId, faces: blurred });
+    faceCount += blurred.length;
+    stages.push({ modelId, faces: blurred.length, boxes: blurred });
 
     // Yield to the event loop so the spinner keeps animating between stages.
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
 
-  return { imageData: working, faceCount, stages };
+  return {
+    imageData: working,
+    faceCount,
+    stages,
+    boxes: stages.flatMap((stage) => stage.boxes),
+  };
 }
 
 /** "2 via MediaPipe, 1 via YuNet" — a readable summary of a run_all pass. */

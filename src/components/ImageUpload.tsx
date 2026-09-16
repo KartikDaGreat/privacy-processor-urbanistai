@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface ImageUploadProps {
   onSelect: (file: File) => void;
-  /** Once an image is loaded the zone collapses so the result takes the stage. */
+  /** Once a photo is loaded the zone collapses so the frame takes the stage. */
   hasImage: boolean;
   fileName?: string;
   disabled?: boolean;
@@ -48,13 +48,13 @@ export function ImageUpload({
 
   if (hasImage) {
     return (
-      <div className="flex items-center justify-between gap-3 rounded-lg glass-surface px-4 py-3">
-        <p className="truncate text-xs font-mono-display text-muted-foreground">
+      <div className="flex items-center justify-between gap-3">
+        <p className="truncate font-mono-display text-micro text-muted-foreground">
           {fileName ?? "image loaded"}
         </p>
-        <Button variant="outline" size="sm" onClick={browse} disabled={disabled}>
+        <Button variant="ghost" size="sm" onClick={browse} disabled={disabled}>
           <RefreshCw />
-          Change image
+          Replace photo
         </Button>
         {hiddenInput}
       </div>
@@ -65,7 +65,7 @@ export function ImageUpload({
     <div
       role="button"
       tabIndex={0}
-      aria-label="Upload an image"
+      aria-label="Choose a photo to anonymize"
       onClick={browse}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -84,27 +84,32 @@ export function ImageUpload({
         handleFiles(event.dataTransfer.files);
       }}
       className={cn(
-        "glass-surface flex cursor-pointer flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed px-6 py-16 text-center transition-all",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "grid-field group grid cursor-pointer place-items-center rounded-panel border border-dashed px-6 py-20 text-center transition-colors",
         isDragging
-          ? "border-primary bg-primary/10 glow-primary"
-          : "border-border hover:border-primary/60",
+          ? "border-primary bg-primary/10"
+          : "border-border hover:border-primary/70",
       )}
     >
-      <div className="rounded-full bg-primary/10 p-4">
-        <ImageUp className="h-7 w-7 text-primary" />
-      </div>
-      <div className="space-y-1">
-        <p className="font-mono-display text-sm text-foreground">
-          Drop an image here
+      <div className="max-w-md space-y-4">
+        <ImageUp
+          className={cn(
+            "mx-auto h-8 w-8 transition-colors",
+            isDragging ? "text-primary-text" : "text-muted-foreground",
+          )}
+          strokeWidth={1.6}
+        />
+        <div className="space-y-1.5">
+          <p className="text-lead font-medium text-foreground">
+            Drop a photo here
+          </p>
+          <p className="text-meta text-muted-foreground">
+            Or click to choose. JPG, PNG, WebP, BMP and GIF all work.
+          </p>
+        </div>
+        <p className="font-mono-display text-micro text-muted-foreground">
+          stays on this device
         </p>
-        <p className="text-xs text-muted-foreground">
-          or click to browse — JPG, PNG, WebP, BMP, GIF
-        </p>
       </div>
-      <p className="text-[11px] font-mono-display text-muted-foreground/70">
-        Processed entirely in your browser — nothing is uploaded
-      </p>
       {hiddenInput}
     </div>
   );

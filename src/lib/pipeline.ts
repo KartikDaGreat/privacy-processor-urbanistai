@@ -1,6 +1,6 @@
 import { processImage, summarizeStages, type StageResult } from "./detect";
 import { imageDataToPngBlob } from "./image";
-import type { BlurMethod, DetectionModelId, RealModelId } from "./types";
+import type { BlurMethod, DetectionModelId, FaceBox, RealModelId } from "./types";
 
 export interface PipelineOutput {
   /** PNG blob, re-encoded from a canvas and therefore free of all metadata. */
@@ -10,6 +10,11 @@ export interface PipelineOutput {
   faceCount: number;
   stages: StageResult[];
   summary: string;
+  /** Blurred regions, for the detection overlay. */
+  boxes: FaceBox[];
+  /** Pixel size the boxes are expressed in. */
+  width: number;
+  height: number;
 }
 
 /**
@@ -42,6 +47,9 @@ export async function runPipeline(options: {
     faceCount: result.faceCount,
     stages: result.stages,
     summary,
+    boxes: result.boxes,
+    width: result.imageData.width,
+    height: result.imageData.height,
   };
 }
 

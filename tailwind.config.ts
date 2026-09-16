@@ -18,9 +18,11 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         surface: { glass: "hsl(var(--surface-glass))" },
+        raised: "hsl(var(--raised))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          text: "hsl(var(--primary-text))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -52,6 +54,14 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        panel: "calc(var(--radius) + 6px)",
+      },
+      fontSize: {
+        display: ["2rem", { lineHeight: "1.08", letterSpacing: "-0.03em" }],
+        title: ["1.375rem", { lineHeight: "1.2", letterSpacing: "-0.02em" }],
+        lead: ["1rem", { lineHeight: "1.55" }],
+        meta: ["0.8125rem", { lineHeight: "1.45" }],
+        micro: ["0.75rem", { lineHeight: "1.4" }],
       },
       keyframes: {
         "accordion-down": {

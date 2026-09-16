@@ -202,13 +202,19 @@ function pixelate(roi: Roi, blockW: number, blockH: number): void {
   }
 }
 
-/** Blur every detected face into `image`, in place. Returns how many were blurred. */
+/**
+ * Blur every detected face into `image`, in place.
+ *
+ * Returns the boxes it actually blurred, clamped to the image. The UI draws
+ * these back over the result, so what you see marked is exactly what was
+ * modified — not a separate list that could drift out of sync.
+ */
 export function blurFaces(
   image: ImageData,
   faces: FaceBox[],
   method: BlurMethod,
-): number {
-  let applied = 0;
+): FaceBox[] {
+  const applied: FaceBox[] = [];
   for (const face of faces) {
     const box = clampBox(face, image.width, image.height);
     if (!box) continue;
@@ -246,7 +252,7 @@ export function blurFaces(
     }
 
     writeRoi(image, roi, box);
-    applied++;
+    applied.push(box);
   }
   return applied;
 }
