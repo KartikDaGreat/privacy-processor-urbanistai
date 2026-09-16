@@ -9,3 +9,5 @@ dist/
 public/models/
 public/vendor/
 *.tsbuildinfo
+
+.vercel
