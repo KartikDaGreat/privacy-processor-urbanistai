@@ -88,6 +88,19 @@ Box and Gaussian use moving-sum passes, so their cost does not grow with kernel
 size. Median uses a sliding 256-bin histogram (Huang's method), which is O(kernel)
 per pixel rather than O(kernel²).
 
+### Guided tour
+
+"Take the tour" in the empty state runs a four-step walkthrough that does the
+real work rather than pointing at the UI: it loads the hard sample photo, runs
+Run All to chain every detector, then runs all five separately and narrates the
+result using the numbers that actually came back.
+
+The closing narration is generated from those numbers, never hardcoded. It
+adapts its headline depending on whether the chain beat the best single
+detector, and explains each empty-handed model for the right reason — only the
+Caffe SSD rescales to 300x300; the MediaPipe models come up short because they
+expect faces closer to the camera.
+
 ### Starter photos
 
 Three freely-licensed samples ship in `public/samples/` so the tool can be tried

@@ -1,17 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Zap } from "lucide-react";
+import { PlayCircle, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { BlurSelector } from "@/components/BlurSelector";
 import { CompareView } from "@/components/CompareView";
-import { ComparisonGrid } from "@/components/ComparisonGrid";
+import {
+  ComparisonGrid,
+  type ComparisonGridHandle,
+  type GridResult,
+} from "@/components/ComparisonGrid";
 import { Header } from "@/components/Header";
 import { ImageUpload } from "@/components/ImageUpload";
 import { ModelSelector } from "@/components/ModelSelector";
 import { SampleImages } from "@/components/SampleImages";
+import { Tour, type TourStep } from "@/components/Tour";
 import { Button } from "@/components/ui/button";
 import { describeProcessingError } from "@/lib/apiError";
 import { decodeImage, imageDataToPngBlob, MAX_DIMENSION } from "@/lib/image";
 import { downloadBlob, outputFileName, runPipeline } from "@/lib/pipeline";
+import { SAMPLES, loadSample } from "@/lib/samples";
 import {
   blurLabel,
   modelLabel,
@@ -37,6 +43,13 @@ export default function Index() {
   const [processedBlob, setProcessedBlob] = useState<Blob | null>(null);
   const [boxes, setBoxes] = useState<FaceBox[]>([]);
   const [faceCount, setFaceCount] = useState(0);
+
+  const [tourStep, setTourStep] = useState<TourStep | null>(null);
+  const [tourBusy, setTourBusy] = useState(false);
+  const [tourBusyLabel, setTourBusyLabel] = useState<string>();
+  const [gridResults, setGridResults] = useState<GridResult[] | null>(null);
+  const gridRef = useRef<ComparisonGridHandle>(null);
+  const gridSectionRef = useRef<HTMLDivElement>(null);
 
   // Both preview URLs are owned here and revoked as they are replaced.
   const originalUrlRef = useRef<string | null>(null);
@@ -70,9 +83,10 @@ export default function Index() {
   }, [setProcessed]);
 
   const handleSelect = useCallback(
-    async (file: File) => {
+    async (file: File): Promise<ImageData | null> => {
       setIsProcessing(false);
       clearResult();
+      setGridResults(null);
 
       try {
         const decoded = await decodeImage(file);
@@ -89,6 +103,7 @@ export default function Index() {
             description: `Scaled to ${MAX_DIMENSION}px on its longest edge to stay within browser canvas limits.`,
           });
         }
+        return decoded.imageData;
       } catch (error) {
         setSourceImage(null);
         setOriginal(null);
@@ -96,22 +111,27 @@ export default function Index() {
         toast.error("That photo could not be read", {
           description: describeProcessingError(error),
         });
+        return null;
       }
     },
     [clearResult, setOriginal],
   );
 
-  const handleProcess = useCallback(async () => {
-    if (!sourceImage) return;
-
+  /*
+   * Takes the image and model as arguments rather than reading them from
+   * state, so the tour can select a model and run it in the same tick without
+   * waiting for a re-render.
+   */
+  const runOn = useCallback(
+    async (image: ImageData, modelId: DetectionModelId) => {
     setIsProcessing(true);
     clearResult();
     setProgressLabel("Loading models");
 
     try {
       const output = await runPipeline({
-        image: sourceImage,
-        model,
+        image,
+        model: modelId,
         blurMethod,
         onStage: (stageModel, index, total) => {
           setProgressLabel(
@@ -129,7 +149,7 @@ export default function Index() {
 
       if (output.faceCount === 0) {
         toast.warning("No faces found", {
-          description: `${modelLabel(model)} found nothing to blur. Metadata was still stripped. ${DISCLAIMER}`,
+          description: `${modelLabel(modelId)} found nothing to blur. Metadata was still stripped. ${DISCLAIMER}`,
         });
       } else {
         toast.success(
@@ -137,20 +157,85 @@ export default function Index() {
           { description: output.summary },
         );
       }
+      return output;
     } catch (error) {
       toast.error("Processing stopped", {
         description: describeProcessingError(error),
       });
+      return null;
     } finally {
       setIsProcessing(false);
       setProgressLabel(undefined);
     }
-  }, [sourceImage, model, blurMethod, clearResult, setProcessed]);
+    },
+    [blurMethod, clearResult, setProcessed],
+  );
+
+  const handleProcess = useCallback(() => {
+    if (!sourceImage) return;
+    return runOn(sourceImage, model);
+  }, [sourceImage, model, runOn]);
 
   const handleDownload = useCallback(() => {
     if (!processedBlob) return;
     downloadBlob(processedBlob, outputFileName(fileName, model));
   }, [processedBlob, fileName, model]);
+
+  const exitTour = useCallback(() => {
+    setTourStep(null);
+    setTourBusy(false);
+    setTourBusyLabel(undefined);
+  }, []);
+
+  /*
+   * Each step performs the real action before advancing, so the narration
+   * always describes something that actually happened.
+   */
+  const advanceTour = useCallback(async () => {
+    if (tourBusy) return;
+    setTourBusy(true);
+    try {
+      switch (tourStep) {
+        case "intro": {
+          // The large group is the sample where the detectors disagree most.
+          const sample = SAMPLES.find((s) => s.id === "large-group") ?? SAMPLES[0];
+          setTourBusyLabel("Loading the photo");
+          const image = await handleSelect(await loadSample(sample));
+          if (!image) return exitTour();
+          setTourStep("loaded");
+          break;
+        }
+        case "loaded": {
+          if (!sourceImage) return exitTour();
+          setModel("run_all");
+          setTourBusyLabel("Chaining five detectors");
+          const output = await runOn(sourceImage, "run_all");
+          if (!output) return exitTour();
+          setTourStep("chained");
+          break;
+        }
+        case "chained": {
+          setTourBusyLabel("Running each detector");
+          gridSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+          const results = (await gridRef.current?.addAllAndRun()) ?? [];
+          setGridResults(results);
+          setTourStep("compared");
+          break;
+        }
+        case "compared":
+          exitTour();
+          break;
+      }
+    } catch (error) {
+      toast.error("The tour could not finish", {
+        description: describeProcessingError(error),
+      });
+      exitTour();
+    } finally {
+      setTourBusy(false);
+      setTourBusyLabel(undefined);
+    }
+  }, [tourStep, tourBusy, sourceImage, handleSelect, runOn, exitTour]);
 
   const status = isProcessing ? "working" : processedUrl ? "done" : "ready";
 
@@ -158,7 +243,12 @@ export default function Index() {
     <div className="min-h-screen">
       <Header />
 
-      <main className="mx-auto max-w-[1180px] px-6 pb-24">
+      <main
+        className={cn(
+          "mx-auto max-w-[1180px] px-6",
+          tourStep ? "pb-72" : "pb-24",
+        )}
+      >
         {!sourceImage ? (
           /* Empty state: the pitch, then the one thing there is to do. */
           <section className="mx-auto max-w-2xl pt-16 text-center">
@@ -182,6 +272,21 @@ export default function Index() {
                 }
                 disabled={isProcessing}
               />
+
+              <div className="flex items-center gap-3 border-t border-border pt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setTourStep("intro")}
+                  disabled={isProcessing || tourStep !== null}
+                >
+                  <PlayCircle />
+                  Take the tour
+                </Button>
+                <p className="text-micro leading-snug text-muted-foreground">
+                  Runs a photo through all five detectors and compares what each
+                  one caught.
+                </p>
+              </div>
             </div>
             <p className="mt-8 text-micro text-muted-foreground">{DISCLAIMER}</p>
           </section>
@@ -253,14 +358,30 @@ export default function Index() {
               </aside>
             </div>
 
-            <ComparisonGrid
-              sourceImage={sourceImage}
-              sourceName={fileName}
-              defaultBlurMethod={blurMethod}
-            />
+            <div ref={gridSectionRef}>
+              <ComparisonGrid
+                ref={gridRef}
+                sourceImage={sourceImage}
+                sourceName={fileName}
+                defaultBlurMethod={blurMethod}
+                onResults={setGridResults}
+              />
+            </div>
           </>
         )}
       </main>
+
+      {tourStep && (
+        <Tour
+          step={tourStep}
+          busy={tourBusy}
+          busyLabel={tourBusyLabel}
+          chainedCount={faceCount}
+          results={gridResults}
+          onNext={advanceTour}
+          onExit={exitTour}
+        />
+      )}
     </div>
   );
 }

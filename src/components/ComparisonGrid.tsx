@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { Download, Loader2, Play, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -18,6 +25,7 @@ import {
   modelLabel,
   type BlurMethod,
   type DetectionModelId,
+  type RealModelId,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -32,10 +40,23 @@ interface ComparisonCard {
   message: string | null;
 }
 
+/** What each detector found, reported back so the tour can narrate real numbers. */
+export interface GridResult {
+  modelId: RealModelId;
+  faceCount: number;
+  failed: boolean;
+}
+
+export interface ComparisonGridHandle {
+  /** Line every detector up against the current photo and run them. */
+  addAllAndRun: () => Promise<GridResult[]>;
+}
+
 interface ComparisonGridProps {
   sourceImage: ImageData | null;
   sourceName?: string;
   defaultBlurMethod: BlurMethod;
+  onResults?: (results: GridResult[]) => void;
 }
 
 let nextId = 0;
@@ -64,11 +85,11 @@ function newCard(
  * each frame's caption — scanning the column answers "which model caught the
  * most here?" without reading a word.
  */
-export function ComparisonGrid({
-  sourceImage,
-  sourceName,
-  defaultBlurMethod,
-}: ComparisonGridProps) {
+export const ComparisonGrid = forwardRef<ComparisonGridHandle, ComparisonGridProps>(
+  function ComparisonGrid(
+    { sourceImage, sourceName, defaultBlurMethod, onResults },
+    ref,
+  ) {
   const [cards, setCards] = useState<ComparisonCard[]>([]);
   const [isRunningAll, setIsRunningAll] = useState(false);
 
@@ -130,8 +151,9 @@ export function ComparisonGrid({
   };
 
   const runCard = useCallback(
-    async (card: ComparisonCard) => {
-      if (!sourceImage) return;
+    async (card: ComparisonCard): Promise<GridResult> => {
+      const model = card.model as RealModelId;
+      if (!sourceImage) return { modelId: model, faceCount: 0, failed: true };
       releaseUrl(card.url);
       updateCard(card.id, {
         status: "processing",
@@ -153,10 +175,12 @@ export function ComparisonGrid({
           faceCount: output.faceCount,
           message: null,
         });
+        return { modelId: model, faceCount: output.faceCount, failed: false };
       } catch (error) {
         const message = describeProcessingError(error);
         updateCard(card.id, { status: "error", message });
         toast.error(`${modelLabel(card.model)} failed`, { description: message });
+        return { modelId: model, faceCount: 0, failed: true };
       }
     },
     [sourceImage, releaseUrl, trackUrl, updateCard],
@@ -166,11 +190,35 @@ export function ComparisonGrid({
     if (!sourceImage || cards.length === 0) return;
     setIsRunningAll(true);
     try {
-      await Promise.all(cards.map((card) => runCard(card)));
+      onResults?.(await Promise.all(cards.map((card) => runCard(card))));
     } finally {
       setIsRunningAll(false);
     }
   };
+
+  /*
+   * Drives the whole sheet in one call, for the guided tour. It runs the cards
+   * it just built rather than reading them back from state, which would still
+   * hold the previous set on this tick.
+   */
+  const addAllAndRun = useCallback(async (): Promise<GridResult[]> => {
+    if (!sourceImage) return [];
+    const fresh = REAL_MODEL_IDS.map((model) => newCard(model, defaultBlurMethod));
+    setCards((previous) => {
+      for (const card of previous) releaseUrl(card.url);
+      return fresh;
+    });
+    setIsRunningAll(true);
+    try {
+      const results = await Promise.all(fresh.map((card) => runCard(card)));
+      onResults?.(results);
+      return results;
+    } finally {
+      setIsRunningAll(false);
+    }
+  }, [sourceImage, defaultBlurMethod, releaseUrl, runCard, onResults]);
+
+  useImperativeHandle(ref, () => ({ addAllAndRun }), [addAllAndRun]);
 
   const disabled = !sourceImage || isRunningAll;
 
@@ -353,4 +401,5 @@ export function ComparisonGrid({
       )}
     </section>
   );
-}
+  },
+);
